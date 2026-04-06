@@ -1,3 +1,5 @@
+import { mkdir } from 'node:fs/promises';
+import path from 'node:path';
 import { Roles } from '../constants/roles.js';
 import { prisma } from './prisma.js';
 
@@ -17,6 +19,8 @@ export const ensureDatabaseReady = async (): Promise<void> => {
 };
 
 const initializeDatabase = async (): Promise<void> => {
+  await ensureSqliteParentDirectory();
+
   // Ensure tables/indexes exist when running in serverless environments.
   await prisma.$executeRawUnsafe(
     'CREATE TABLE IF NOT EXISTS "User" ("id" TEXT NOT NULL PRIMARY KEY, "name" TEXT NOT NULL, "email" TEXT NOT NULL, "role" TEXT NOT NULL CHECK ("role" IN (\'viewer\',\'analyst\',\'admin\')), "isActive" INTEGER NOT NULL DEFAULT 1, "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)',
@@ -72,4 +76,19 @@ const initializeDatabase = async (): Promise<void> => {
       ],
     });
   }
+};
+
+const ensureSqliteParentDirectory = async (): Promise<void> => {
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl || !databaseUrl.startsWith('file:')) {
+    return;
+  }
+
+  const sqlitePath = databaseUrl.startsWith('file:/')
+    ? databaseUrl.replace('file:', '')
+    : path.resolve(process.cwd(), databaseUrl.replace('file:', ''));
+
+  const dirPath = path.dirname(sqlitePath);
+  await mkdir(dirPath, { recursive: true });
 };
