@@ -79,6 +79,14 @@ Seeded users:
 - `usr_analyst`
 - `usr_viewer`
 
+## Vercel Deployment Notes
+
+- This repo includes a serverless entrypoint at `api/index.ts` and `vercel.json` rewrites.
+- Set environment variable `DATABASE_URL` to:
+  - `file:/tmp/dev.db` on Vercel (required for writable SQLite path in serverless runtime)
+- `postinstall` runs `prisma generate` automatically.
+- The `/tmp` filesystem is ephemeral in serverless, so data is not durable across cold starts.
+
 ## API Docs
 
 See:
