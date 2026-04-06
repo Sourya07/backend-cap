@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import type { RequestHandler } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'node:path';
@@ -12,7 +13,13 @@ import { healthRoutes } from './routes/healthRoutes.js';
 
 export const app = express();
 
-app.use(helmet());
+type HelmetFactory = (options?: unknown) => RequestHandler;
+const helmetFactory: HelmetFactory =
+  typeof helmet === 'function'
+    ? (helmet as unknown as HelmetFactory)
+    : ((helmet as unknown as { default: HelmetFactory }).default);
+
+app.use(helmetFactory());
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json({ limit: '1mb' }));
